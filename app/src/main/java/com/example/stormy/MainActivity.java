@@ -2,6 +2,8 @@ package com.example.stormy;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.text.method.LinkMovementMethod;
@@ -15,11 +17,15 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import android.widget.TextView;
 
@@ -30,11 +36,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private CurrentWeather currentWeather;
-
     private ImageView iconImageView;
 
-    final double latitude = 33.7490;
-    final double longitude = -84.3880;
+    final double latitude = 42.3314;
+    final double longitude = -83.0458;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,51 +57,22 @@ public class MainActivity extends AppCompatActivity {
         iconImageView = findViewById(R.id.weatherIconView);
 
         String apiKey = "107078ea928d559a65d02fcb25c909fc";
-        String forecastURL = "https://api.darksky.net/forecast/" + apiKey + "/" + 33.749 + "," + -84.388;
-
-        String GMapsAPIKey = "AIzaSyABr6mZOAUI3iSSdS-YJupruQ9-X-J3FmA";
-        String GMapsAPIURL = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + latitude + "," + longitude + "&key=" + GMapsAPIKey;
+        String forecastURL = "https://api.darksky.net/forecast/" + apiKey + "/" + latitude + "," + longitude;
 
         if (isNetworkAvailable()) {
             OkHttpClient client = new OkHttpClient();
-
-            Request GMapsReq = new Request.Builder().url(GMapsAPIURL).build();
-            Call GMapsCall = client.newCall(GMapsReq);
-            GMapsCall.enqueue(new Callback() {
-                @Override
-                public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    try {
-                        String GMapsData = Objects.requireNonNull(response.body()).string();
-                        if (response.isSuccessful()) {
-                            Log.i(TAG, "GMaps: " + GMapsData);
-                        } else {
-                            alertUserError();
-                        }
-                    } catch (IOException e) {
-                        Log.e(TAG, "IO Exception caught ", e);
-                    }
-                }
-            });
 
             Request DarkSkyReq = new Request.Builder().url(forecastURL).build();
             Call DarkSkyCall = client.newCall(DarkSkyReq);
             DarkSkyCall.enqueue(new Callback() {
                 @Override
-                public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
-                }
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {}
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) {
                     try {
                         String jsonData = Objects.requireNonNull(response.body()).string();
 
-                        Log.i(TAG, "Data: " + jsonData);
                         if (response.isSuccessful()) {
                             currentWeather = getCurrentDetails(jsonData);
 
@@ -140,11 +116,31 @@ public class MainActivity extends AppCompatActivity {
         JSONObject currently = forecast.getJSONObject("currently");
         String timezone = forecast.getString("timezone");
 
+        // Geocoder to get location name
+        Geocoder gcd = new Geocoder(this, Locale.getDefault());
+        List<Address> addresses = null;
+        String location = null;
+        try {
+            addresses = gcd.getFromLocation(latitude, longitude, 1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (addresses != null && addresses.size() > 0) {
+            Address address = addresses.get(0);
+
+            if (address.getCountryCode().equals("US")) {
+                location = address.getLocality() + ", " + address.getAdminArea();
+            } else {
+                location = address.getAdminArea() + ", " + address.getFeatureName();
+                System.out.println(address);
+            }
+        }
+
         CurrentWeather currentWeather = new CurrentWeather();
         currentWeather.setHumidity(currently.getDouble("humidity"));
         currentWeather.setTime(currently.getLong("time"));
         currentWeather.setIcon(currently.getString("icon"));
-        currentWeather.setLocationLabel("Shanghai, China");
+        currentWeather.setLocationLabel(location);
         currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
         currentWeather.setSummary(currently.getString("summary"));
         currentWeather.setTemperature(currently.getDouble("temperature"));
