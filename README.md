@@ -1,7 +1,5 @@
 # **Stormy**
 
-------------
-
 ## **Introduction**
 
 Stormy is a single-page Android application that takes a location, in longitude-latitude form,
