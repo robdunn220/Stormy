@@ -1,5 +1,5 @@
 package com.example.stormy;
-
+import android.annotation.SuppressLint;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -12,6 +12,7 @@ public class CurrentWeather {
     private double humidity;
     private double precipChance;
     private String summary;
+    private String timezone;
 
     public CurrentWeather(String locationLabel,
                           String icon,
@@ -31,23 +32,20 @@ public class CurrentWeather {
         this.timezone = timezone;
     }
 
-    public CurrentWeather() {
-    }
+    public CurrentWeather() {}
 
+//    The following methods get and set the various attributes for CurrentWeather instance that is created
+//    in the API call in Main Activity
     public String getTimezone() {
         return timezone;
     }
-
     public void setTimezone(String timezone) {
         this.timezone = timezone;
     }
 
-    private String timezone;
-
     public String getLocationLabel() {
         return locationLabel;
     }
-
     public void setLocationLabel(String locationLabel) {
         this.locationLabel = locationLabel;
     }
@@ -55,11 +53,9 @@ public class CurrentWeather {
     public String getIcon() {
         return icon;
     }
-
     public void setIcon(String icon) {
         this.icon = icon;
     }
-
     public int getIconID() {
         int iconID = R.drawable.clear_day;
 
@@ -95,15 +91,13 @@ public class CurrentWeather {
     public long getTime() {
         return time;
     }
-
     public String getFormattedTime() {
-        SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
         formatter.setTimeZone(TimeZone.getTimeZone(timezone));
 
         Date dateTime = new Date(time * 1000);
         return formatter.format(dateTime);
     }
-
     public void setTime(long time) {
         this.time = time;
     }
@@ -111,7 +105,6 @@ public class CurrentWeather {
     public double getTemperature() {
         return temperature;
     }
-
     public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
@@ -119,7 +112,6 @@ public class CurrentWeather {
     public double getHumidity() {
         return humidity;
     }
-
     public void setHumidity(double humidity) {
         this.humidity = humidity;
     }
@@ -127,7 +119,6 @@ public class CurrentWeather {
     public double getPrecipChance() {
         return precipChance;
     }
-
     public void setPrecipChance(double precipChance) {
         this.precipChance = precipChance;
     }
@@ -135,7 +126,6 @@ public class CurrentWeather {
     public String getSummary() {
         return summary;
     }
-
     public void setSummary(String summary) {
         this.summary = summary;
     }

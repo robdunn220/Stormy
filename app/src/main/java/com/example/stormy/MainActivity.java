@@ -37,31 +37,34 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private CurrentWeather currentWeather;
     private ImageView iconImageView;
+    final double latitude = 39.7684;
+    final double longitude = -86.1581;
 
-    final double latitude = 42.3314;
-    final double longitude = -83.0458;
-
+    /* Method calls getForecast() to create a new instance of CurrentWeather on app refresh */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getForecast();
     }
 
+    /* Method to retrieve data from DarkSky API and Geocode API. Data is then used to create instance of CurrentWeather */
     private void getForecast() {
-        final ActivityMainBinding binding = DataBindingUtil.setContentView(MainActivity.this,
-                R.layout.activity_main);
+        /* Used to send attributes to the UI at the end of the function */
+        final ActivityMainBinding binding = DataBindingUtil.setContentView(MainActivity.this, R.layout.activity_main);
 
         TextView darkSky = findViewById(R.id.darkSkyAttribution);
         darkSky.setMovementMethod(LinkMovementMethod.getInstance());
 
+        /* Finds the weather icon image controller for the UI, which is set when the data is retrieved from the API call */
         iconImageView = findViewById(R.id.weatherIconView);
 
         String apiKey = "107078ea928d559a65d02fcb25c909fc";
         String forecastURL = "https://api.darksky.net/forecast/" + apiKey + "/" + latitude + "," + longitude;
 
+        /* Checks network availability */
         if (isNetworkAvailable()) {
+            /* Creates a connection instance, which is used to make a request to the API */
             OkHttpClient client = new OkHttpClient();
-
             Request DarkSkyReq = new Request.Builder().url(forecastURL).build();
             Call DarkSkyCall = client.newCall(DarkSkyReq);
             DarkSkyCall.enqueue(new Callback() {
@@ -72,10 +75,9 @@ public class MainActivity extends AppCompatActivity {
                 public void onResponse(@NotNull Call call, @NotNull Response response) {
                     try {
                         String jsonData = Objects.requireNonNull(response.body()).string();
-
                         if (response.isSuccessful()) {
+                            /* Sends response to getCurrent details, which sets the attributes needed for the CurrentWeather class */
                             currentWeather = getCurrentDetails(jsonData);
-
                             CurrentWeather displayWeather = new CurrentWeather(
                                     currentWeather.getLocationLabel(),
                                     currentWeather.getIcon(),
@@ -86,9 +88,8 @@ public class MainActivity extends AppCompatActivity {
                                     currentWeather.getSummary(),
                                     currentWeather.getTimezone()
                             );
-
+                            /* Sends CurrentWeather instance to the UI */
                             binding.setWeather(displayWeather);
-
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
                                     iconImageView.setImageDrawable(drawable);
                                 }
                             });
-
                         } else {
                             alertUserError();
                         }
@@ -110,13 +110,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /* Response from API call is sent here, where essential data is extracted */
     @NotNull
     private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
         JSONObject forecast = new JSONObject(jsonData);
         JSONObject currently = forecast.getJSONObject("currently");
         String timezone = forecast.getString("timezone");
 
-        // Geocoder to get location name
+        /* Reverse Geocode to get location name */
         Geocoder gcd = new Geocoder(this, Locale.getDefault());
         List<Address> addresses = null;
         String location = null;
@@ -125,17 +126,23 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        /* Countries outside of US have data organized differently,
+        so it's necessary to institute checks to find the correct data when setting location name */
         if (addresses != null && addresses.size() > 0) {
             Address address = addresses.get(0);
-
             if (address.getCountryCode().equals("US")) {
                 location = address.getLocality() + ", " + address.getAdminArea();
             } else {
-                location = address.getAdminArea() + ", " + address.getFeatureName();
+                if (address.getLocality() != null) {
+                    location = address.getLocality() + ", " + address.getCountryCode();
+                } else {
+                    location = address.getAdminArea() + ", " + address.getCountryCode();
+                }
                 System.out.println(address);
             }
         }
 
+        /* Sets the gathered attributes for the CurrentWeather instance */
         CurrentWeather currentWeather = new CurrentWeather();
         currentWeather.setHumidity(currently.getDouble("humidity"));
         currentWeather.setTime(currently.getLong("time"));
@@ -149,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
         return currentWeather;
     }
 
+    /* Checks for network connectivity. This is called before any other process begins */
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         assert manager != null;
@@ -170,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.show(getSupportFragmentManager(), "error_dialog");
     }
 
+    /* Refreshes the page with current information. Triggered by refresh button in the UI */
     public void refreshOnClick(View view) {
         Toast.makeText(this, "Refreshing data", Toast.LENGTH_LONG).show();
         getForecast();

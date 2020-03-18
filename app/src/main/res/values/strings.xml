@@ -5,4 +5,9 @@
     <string name="error_button_ok">OK</string>
     <string name="network_unavailable">Sorry, the network is unavailable.</string>
     <string name="dark_sky_message"><a href="https://darksky.net/poweredby">Powered by Dark Sky</a></string>
+    <string name="degreesymbol">DegreeSymbol</string>
+    <string name="weathericon">WeatherIcon</string>
+    <string name="humidity">Humidity</string>
+    <string name="precipitation">Precipitation</string>
+    <string name="refreshbutton">RefreshButton</string>
 </resources>
